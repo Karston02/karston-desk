@@ -47,7 +47,7 @@ Search the project for `TODO(karston)` to find filler that still needs real deta
 | Window | The sky follows the real sun over Austin (sunrise/sunset calculated for today). |
 | Lamp | Turns on by itself after sunset. Click to toggle. |
 | Cat | Sleeps in the lamp light. Click it and it walks across the keyboard. |
-| Whiteboard | How the job scraper works, plus a supply-and-demand sketch. Opens that case study. |
+| Whiteboard | The nightly rostering sync pipeline, plus a supply-and-demand sketch. Opens Experience. |
 | Ticket board | Career as Jira tickets. Opens Experience. |
 | Books | Education. |
 | Notebook | Résumé. |
