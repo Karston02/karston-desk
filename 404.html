@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Page not found · Karston Kuciemba</title>
+    <meta name="robots" content="noindex" />
+    <meta name="theme-color" content="#12141F" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Karla:wght@400;600&family=Space+Mono&display=swap" />
+    <style>
+      :root {
+        --bg: #12141f;
+        --fg: #f1ece2;
+        --muted: #a3a0b2;
+        --rule: rgba(241, 236, 226, 0.1);
+        --raised: rgba(241, 236, 226, 0.05);
+        --lamp: #f6b85c;
+        --ease: cubic-bezier(0.22, 1, 0.36, 1);
+        color-scheme: dark;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body {
+        background: var(--bg); color: var(--fg); font-family: Karla, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; line-height: 1.6;
+        display: grid; place-items: center; padding: 24px; -webkit-font-smoothing: antialiased;
+      }
+      main { width: min(480px, 100%); display: grid; gap: 16px; }
+      .term { font-family: 'Space Mono', ui-monospace, Menlo, monospace; font-size: 0.75rem; line-height: 20px; color: var(--muted); margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+      .term .err { color: var(--lamp); }
+      h1 { font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: 2.5rem; line-height: 1.1; margin: 0; letter-spacing: -0.015em; }
+      p { margin: 0; color: var(--muted); }
+      .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+      a.btn {
+        font-family: 'Space Mono', ui-monospace, Menlo, monospace; font-size: 0.75rem; line-height: 16px; text-decoration: none;
+        display: inline-flex; align-items: center; height: 40px; padding: 0 16px; border-radius: 8px; border: 1px solid transparent;
+        background: var(--lamp); color: #15161f; transition: background-color 0.16s var(--ease);
+      }
+      a.btn:hover { background: #f8c578; }
+      a.btn.ghost { background: var(--raised); color: var(--fg); border-color: var(--rule); }
+      a.btn.ghost:hover { background: rgba(241, 236, 226, 0.08); }
+      a:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <pre class="term">karston@austin ~ % cd <span id="path">this-page</span>
+<span class="err">cd: no such file or directory</span></pre>
+      <h1>Nothing on this desk</h1>
+      <p>That page doesn't exist, or it moved.</p>
+      <div class="row">
+        <a class="btn" href="/">Back to the desk</a>
+        <a class="btn ghost" href="/resume/">Plain résumé</a>
+      </div>
+    </main>
+    <script>
+      // Echo the path that was asked for (as text, never as HTML)
+      document.getElementById('path').textContent = decodeURIComponent(location.pathname).replace(/^\//, '') || 'this-page';
+    </script>
+  </body>
+</html>
