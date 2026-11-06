@@ -137,18 +137,37 @@ export class Panel {
     });
   }
 
+  /** Where focus was before the panel opened, so closing it can put focus back. */
+  private opener: HTMLElement | null = null;
+
   show(id: PanelId | null): void {
+    const wasOpen = !!this.current;
     this.current = id;
     document.body.classList.toggle('panel-open', !!id);
     if (!id) {
+      const inside = this.el.contains(document.activeElement);
       this.el.hidden = true;
+      // give focus back to whatever opened the panel (a dock button, usually)
+      if (this.opener?.isConnected && (inside || document.activeElement === document.body)) this.opener.focus({ preventScroll: true });
+      this.opener = null;
     } else {
+      if (!wasOpen) {
+        const ae = document.activeElement as HTMLElement | null;
+        this.opener = ae && ae !== document.body && !this.el.contains(ae) ? ae : null;
+      }
       // restart the slide-in animation
       this.el.hidden = true;
       void this.el.offsetWidth;
       this.el.hidden = false;
       this.el.innerHTML = `<button class="close" type="button" aria-label="Close panel"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>${render(id)}`;
       this.el.scrollTop = 0;
+      // move focus to the heading, so keyboard and screen reader users land in the panel
+      const title = this.el.querySelector<HTMLElement>('h2');
+      if (title) {
+        title.id = 'panelTitle';
+        title.tabIndex = -1;
+        title.focus({ preventScroll: true });
+      }
       this.el.querySelector('.close')?.addEventListener('click', () => this.show(null));
       const copy = this.el.querySelector<HTMLButtonElement>('#copy');
       copy?.addEventListener('click', () => {

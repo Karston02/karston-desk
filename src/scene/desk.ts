@@ -101,7 +101,7 @@ export function buildDesk(scene: THREE.Scene, register: Register, screenCanvas: 
   handle.rotation.z = -Math.PI / 2;
   handle.castShadow = true;
   mug.add(handle);
-  mug.add(at(cyl(0.19, 0.19, 0.01, mat(0x3a2516, { roughness: 0.15 })), 0, 0.42, 0));
+  mug.add(at(cyl(0.19, 0.19, 0.01, mat(0x3a2516, { roughness: 0.25 })), 0, 0.42, 0));
   mug.add(at(cyl(0.222, 0.222, 0.07, mat(COLORS.lamp, { roughness: 0.4 })), 0, 0.3, 0));
   at(mug, 1.85, 0, 0.35);
   scene.add(mug);

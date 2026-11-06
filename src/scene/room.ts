@@ -134,7 +134,7 @@ export function buildRoom(scene: THREE.Scene, register: Register): Part {
   scene.add(at(new THREE.Mesh(new THREE.PlaneGeometry(WINDOW.w, WINDOW.h), new THREE.MeshBasicMaterial({ map: city.t, toneMapped: false })), WINDOW.x, WINDOW.y, WALL_Z + 0.01));
   scene.add(
     at(
-      new THREE.Mesh(new THREE.PlaneGeometry(WINDOW.w, WINDOW.h), new THREE.MeshStandardMaterial({ color: 0x8ea0d8, transparent: true, opacity: 0.07, roughness: 0.05, metalness: 0.8 })),
+      new THREE.Mesh(new THREE.PlaneGeometry(WINDOW.w, WINDOW.h), new THREE.MeshStandardMaterial({ color: 0x8ea0d8, transparent: true, opacity: 0.07, roughness: 0.22, metalness: 0.8 })),
       WINDOW.x,
       WINDOW.y,
       WALL_Z + 0.07,

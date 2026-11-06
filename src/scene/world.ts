@@ -3,6 +3,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { BLOOM, COLORS, LIGHTS } from './config';
 import { buildDesk, SCREEN_GLOW, SCREEN_LIGHT } from './desk';
 import { buildRoom } from './room';
@@ -160,6 +161,22 @@ export function createWorld(o: WorldOptions): World | null {
   let pixelRatio = q.pixelRatio;
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
+  // Phone GPUs light at lower precision, so a sharp highlight can come out as Infinity or NaN. Bloom then
+  // smears that one pixel into big black blocks. Zero out bad pixels and cap the brightness before bloom.
+  composer.addPass(
+    new ShaderPass({
+      uniforms: { tDiffuse: { value: null } },
+      vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: `
+        uniform sampler2D tDiffuse;
+        varying vec2 vUv;
+        void main() {
+          vec4 c = texture2D(tDiffuse, vUv);
+          bool bad = any(isnan(c)) || any(isinf(c)) || any(greaterThan(abs(c), vec4(60000.0)));
+          gl_FragColor = bad ? vec4(0.0, 0.0, 0.0, 1.0) : vec4(min(c.rgb, vec3(16.0)), c.a);
+        }`,
+    }),
+  );
   const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), BLOOM.strength, BLOOM.radius, BLOOM.threshold);
   if (q.bloom) composer.addPass(bloom);
   composer.addPass(new OutputPass());
@@ -236,6 +253,20 @@ export function createWorld(o: WorldOptions): World | null {
    */
   let sizedAs = '';
   let running = false;
+  /*
+   * Phones can drop the WebGL context when memory runs low (or after the tab was in the background).
+   * three.js restores it; canvas textures then need re-uploading and the canvas a fresh size.
+   */
+  o.canvas.addEventListener('webglcontextlost', e => e.preventDefault());
+  o.canvas.addEventListener('webglcontextrestored', () => {
+    scene.traverse((obj: THREE.Object3D) => {
+      const m = (obj as THREE.Mesh).material as THREE.MeshStandardMaterial | THREE.MeshBasicMaterial | undefined;
+      if (m && 'map' in m && m.map) m.map.needsUpdate = true;
+    });
+    sizedAs = '';
+    resize();
+  });
+
   const resize = () => {
     const w = innerWidth;
     const h = innerHeight;
