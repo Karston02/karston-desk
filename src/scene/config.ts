@@ -17,7 +17,7 @@ export const LIGHTS = {
 export const BLOOM = {
   strength: 0.55,
   radius: 0.5,
-  threshold: 0.86,
+  threshold: 0.9,
 };
 
 export const COLORS = {

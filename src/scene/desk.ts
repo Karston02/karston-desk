@@ -7,7 +7,17 @@ export interface Desk extends Part {
   quack(): void;
   /** Returns true when the phone starts buzzing this frame (so a sound can play). */
   buzzed(): boolean;
+  /**
+   * Screen brightness. Dark screens (terminal, games) can glow; light screens
+   * (project previews) must stay under the bloom threshold or they wash out.
+   */
+  setScreenLevel(level: number): void;
 }
+
+/** Brightness for dark screen content (terminal, games). */
+export const SCREEN_GLOW = 1.08;
+/** Brightness for light screen content, kept below BLOOM.threshold. */
+export const SCREEN_LIGHT = 0.78;
 
 export function buildDesk(scene: THREE.Scene, register: Register, screenCanvas: HTMLCanvasElement, q: Quality): Desk & { screenTexture: THREE.CanvasTexture } {
   const frameM = mat(COLORS.frame, { roughness: 0.5, metalness: 0.3 });
@@ -34,7 +44,7 @@ export function buildDesk(scene: THREE.Scene, register: Register, screenCanvas: 
   screenTexture.colorSpace = THREE.SRGBColorSpace;
   screenTexture.anisotropy = 8;
   const screenMat = new THREE.MeshBasicMaterial({ map: screenTexture, toneMapped: false });
-  screenMat.color.setScalar(1.12);
+  screenMat.color.setScalar(SCREEN_GLOW);
   mon.add(at(new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.523), screenMat), 0, 1.26, -0.801));
   (
     [
@@ -289,6 +299,9 @@ export function buildDesk(scene: THREE.Scene, register: Register, screenCanvas: 
     },
     quack() {
       hop = 1;
+    },
+    setScreenLevel(level: number) {
+      screenMat.color.setScalar(level);
     },
     buzzed() {
       const b = justBuzzed;

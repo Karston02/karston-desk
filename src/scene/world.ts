@@ -4,7 +4,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { BLOOM, COLORS, LIGHTS } from './config';
-import { buildDesk } from './desk';
+import { buildDesk, SCREEN_GLOW, SCREEN_LIGHT } from './desk';
 import { buildRoom } from './room';
 import { buildCat } from './cat';
 import type { MonitorScreen } from './screens';
@@ -288,6 +288,7 @@ export function createWorld(o: WorldOptions): World | null {
     cat.update(frame);
     if (desk.buzzed()) o.onBuzz();
     if (o.screen.update(t)) desk.screenTexture.needsUpdate = true;
+    desk.setScreenLevel(o.screen.isLight ? SCREEN_LIGHT : SCREEN_GLOW);
 
     composer.render(dt);
     requestAnimationFrame(loop);

@@ -42,6 +42,11 @@ export class MonitorScreen {
     this.lastFrame = -1;
   }
 
+  /** True when the screen shows mostly-white content (project previews without a screenshot). */
+  get isLight(): boolean {
+    return !!this.project && !this.game && !this.images.get(this.project.slug)?.naturalWidth;
+  }
+
   get showingProject(): boolean {
     return !!this.project;
   }
@@ -159,7 +164,7 @@ function drawScraper(g: CanvasRenderingContext2D, W: number, _H: number, t: numb
   }
   g.fillStyle = '#8A8B97';
   g.font = `14px ${MONO}`;
-  g.fillText(`scanned 12 boards · ${shown} of ${rows.length} shown`, 36, 548);
+  g.fillText(`${shown} of ${rows.length} matches shown`, 36, 548);
 }
 
 function drawTickets(g: CanvasRenderingContext2D, W: number, _H: number, t: number): void {
