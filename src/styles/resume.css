@@ -23,23 +23,23 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   padding: max(48px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) 64px max(20px, env(safe-area-inset-left));
 }
 .r-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 20px; padding-bottom: 24px; border-bottom: 2px solid var(--fg); }
-h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(2.2rem, 6vw, 3.2rem); line-height: 1; margin: 0; letter-spacing: -0.015em; }
+h1 { font-family: var(--f-display); font-weight: 600; font-size: clamp(2.2rem, 6vw, 3.2rem); line-height: 1; margin: 0; letter-spacing: -0.015em; }
 .r-title { margin: 8px 0 0; color: var(--muted); }
 .r-contact { display: grid; gap: 4px; justify-items: end; font-family: var(--f-mono); font-size: 0.8rem; }
 .r-email { user-select: all; }
-.r-links { display: flex; gap: 14px; }
+.r-links { display: flex; gap: 16px; }
 .r-desk { color: var(--accent); text-decoration: none; }
 
-section { padding-block: 28px 4px; }
-h2 { font-family: var(--f-mono); font-weight: 400; font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0 0 14px; }
+section { padding-block: 32px 4px; }
+h2 { font-family: var(--f-mono); font-weight: 400; font-size: 0.8125rem; line-height: 20px; color: var(--accent); margin: 0 0 12px; }
 .r-summary { margin: 0; max-width: 66ch; font-size: 1.05rem; }
-.r-item { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 20px; padding-block: 12px; border-top: 1px solid var(--rule); }
+.r-item { display: grid; grid-template-columns: 152px minmax(0, 1fr); gap: 20px; padding-block: 12px; border-top: 1px solid var(--rule); }
 .r-item:first-of-type { border-top: 0; }
 .r-when { font-family: var(--f-mono); font-size: 0.75rem; color: var(--muted); padding-top: 4px; font-variant-numeric: tabular-nums; }
-.r-body h3 { font-size: 1.02rem; font-weight: 700; margin: 0 0 4px; }
+.r-body h3 { font-size: 1rem; font-weight: 600; margin: 0 0 4px; }
 .r-org { font-weight: 400; color: var(--muted); }
 .r-body p, .r-body ul { margin: 0 0 6px; max-width: 66ch; }
-.r-body ul { padding-left: 18px; }
+.r-body ul { padding-left: 20px; }
 .r-stack, .r-skills { font-family: var(--f-mono); font-size: 0.75rem; color: var(--muted); }
 .r-foot { margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 0.9rem; }
 

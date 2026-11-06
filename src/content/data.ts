@@ -2,7 +2,8 @@
  * Everything the site says lives in this file. The 3D desk, the terminal,
  * the side panels and the plain résumé page are all generated from it.
  *
- * Search for "TODO(karston)" to find filler that still needs real details.
+ * A "TODO(karston): ..." note at the end of a string is stripped before it
+ * reaches the page, so reminders here never ship.
  */
 
 export interface Link {

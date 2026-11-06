@@ -375,7 +375,7 @@ export function buildRoom(scene: THREE.Scene, register: Register): Part {
     wobblyRect(700, 368, 420, 150);
     label('lock + dedupe', 760, 420);
     label('external refs · retries', 735, 462, 36);
-    label('no double imports!!', 740, 500, 38);
+    label('no double imports', 760, 500, 38);
     ink('#1D3B8F', 5);
     arrow(700, 445, 560, 445);
     wobblyRect(300, 390, 250, 110);

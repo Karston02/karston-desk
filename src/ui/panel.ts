@@ -43,14 +43,14 @@ function render(id: PanelId): string {
       <h3>Approach</h3><ul>${p.approach.map(a => `<li>${esc(clean(a))}</li>`).join('')}</ul>
       ${result ? `<h3>Result</h3><p>${esc(result)}</p>` : ''}
       ${p.links.length ? `<div class="links">${p.links.map(l => `<a href="${esc(l.href)}" target="_blank" rel="noopener">${esc(l.label)} ↗</a>`).join('')}</div>` : ''}
-      <p class="tip">The monitor is showing this project now.</p>`;
+      <p class="tip">The monitor is showing this project now</p>`;
   }
   switch (id) {
     case 'secrets': {
       const found = secretsFound();
       return `
         <div class="obj">Secrets · ${found.size} of ${SECRETS.length}</div>
-        <h2>${found.size === SECRETS.length ? 'You found everything.' : 'Things hidden in the room'}</h2>
+        <h2>${found.size === SECRETS.length ? 'You found everything' : 'Things hidden in the room'}</h2>
         <p class="m">${found.size === SECRETS.length ? 'Thanks for poking around. You should probably say hello.' : 'Hints for the ones you have not found yet. Progress is saved in this browser.'}</p>
         ${SECRETS.map(s => {
           const ok = found.has(s.id);
@@ -60,9 +60,9 @@ function render(id: PanelId): string {
     case 'about':
       return `
         <div class="obj">The mug · About</div>
-        <h2>Hi, I'm ${esc(profile.first)}.</h2>
+        <h2>Hi, I'm ${esc(profile.first)}</h2>
         ${profile.about.map((p, i) => `<p class="${i ? 'm' : ''}">${esc(p)}</p>`).join('')}
-        <p class="tip">Try typing <b>neofetch</b>.</p>`;
+        <p class="tip">Try typing <kbd>neofetch</kbd></p>`;
     case 'projects':
       return `
         <div class="obj">The monitor · Projects</div>
@@ -104,7 +104,7 @@ function render(id: PanelId): string {
           <a class="btn" href="/resume/">Open plain résumé</a>
           ${profile.links.resumePdf ? `<a class="btn ghost" href="${esc(profile.links.resumePdf)}" download>Download PDF</a>` : ''}
         </div>
-        <p class="tip">Recruiter in a hurry? The plain page has everything, no WebGL needed.</p>`;
+        <p class="tip">Recruiter in a hurry? The plain page has everything, no WebGL needed</p>`;
     case 'contact':
       return `
         <div class="obj">The phone · Contact</div>
@@ -147,7 +147,7 @@ export class Panel {
       this.el.hidden = true;
       void this.el.offsetWidth;
       this.el.hidden = false;
-      this.el.innerHTML = `<button class="close" type="button" aria-label="Close panel">×</button>${render(id)}`;
+      this.el.innerHTML = `<button class="close" type="button" aria-label="Close panel"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>${render(id)}`;
       this.el.scrollTop = 0;
       this.el.querySelector('.close')?.addEventListener('click', () => this.show(null));
       const copy = this.el.querySelector<HTMLButtonElement>('#copy');
