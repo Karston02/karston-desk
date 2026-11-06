@@ -300,7 +300,7 @@ export function buildRoom(scene: THREE.Scene, register: Register): Part {
   scene.add(books);
   register('edu', 'books → Education', books, 'lift');
 
-  /* Whiteboard: how the job scraper works, plus a little economics */
+  /* Whiteboard: the nightly rostering sync from FullBloom, plus a little economics */
   const WB = { x: -3.25, y: 2.25, w: 1.8, h: 1.12 };
   const wb = canvasTex(1440, 896);
   const drawWhiteboard = () => {
@@ -351,19 +351,20 @@ export function buildRoom(scene: THREE.Scene, register: Register): Part {
     };
 
     ink('#1D2A44', 4);
-    label('job-scraper v2', 60, 92, 70);
+    label('nightly rostering sync', 60, 92, 70);
     g.beginPath();
     g.moveTo(60, 108);
-    g.lineTo(470, 104);
+    g.lineTo(640, 104);
     g.stroke();
 
     // pipeline
     ink('#1D3B8F', 5);
     wobblyRect(60, 170, 250, 110);
-    label('job boards', 100, 238); // TODO(karston): real count
+    label('Clever', 90, 220);
+    label('ClassLink · SFTP', 80, 262, 34);
     wobblyRect(420, 170, 260, 110);
-    label('scrapers', 470, 220);
-    label('(cron, nightly)', 450, 262, 36);
+    label('Step Functions', 440, 220);
+    label('(per district)', 455, 262, 36);
     wobblyRect(790, 170, 240, 110);
     label('normalize', 830, 238);
     arrow(312, 225, 412, 225);
@@ -372,15 +373,15 @@ export function buildRoom(scene: THREE.Scene, register: Register): Part {
 
     ink('#B3261E', 5);
     wobblyRect(700, 368, 420, 150);
-    label('rules filter', 760, 420);
-    label('remote or ATX · pay floor', 722, 462, 36);
-    label('no on-call!!', 760, 500, 38);
+    label('lock + dedupe', 760, 420);
+    label('external refs · retries', 735, 462, 36);
+    label('no double imports!!', 740, 500, 38);
     ink('#1D3B8F', 5);
     arrow(700, 445, 560, 445);
     wobblyRect(300, 390, 250, 110);
-    label('my shortlist', 322, 458);
+    label('district roster', 312, 458);
     ink('#1F7A4C', 5);
-    label('only what matters ✓', 312, 548, 38);
+    label('millions of records ✓', 306, 548, 38);
 
     // supply & demand corner
     ink('#1D2A44', 4);
@@ -410,7 +411,7 @@ export function buildRoom(scene: THREE.Scene, register: Register): Part {
 
     // stray todo
     ink('#1D2A44', 3);
-    label('TODO: dedupe reposts', 60, 820, 40);
+    label('TODO: mid-year transfers', 60, 820, 40);
     wb.t.needsUpdate = true;
   };
   drawWhiteboard();
@@ -426,7 +427,7 @@ export function buildRoom(scene: THREE.Scene, register: Register): Part {
   });
   at(whiteboard, WB.x, WB.y, WALL_Z + 0.04);
   scene.add(whiteboard);
-  register('whiteboard', 'whiteboard → Job scraper design', whiteboard, 'pop');
+  register('whiteboard', 'whiteboard → Experience', whiteboard, 'pop');
 
   /* Ticket board: experience */
   const BW = 2.05;

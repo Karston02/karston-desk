@@ -58,12 +58,16 @@ $('secretsBtn').addEventListener('click', () => open('secrets'));
 /* ---------- Panels ---------- */
 const dock = $('dock');
 const sectionKey = (id: PanelId | null) => (id?.startsWith('project:') ? 'projects' : id === 'secrets' ? null : id);
+/** Set by the whiteboard so the Experience panel opens with the camera on the whiteboard instead of the ticket board. */
+let viewOverride: { id: PanelId; view: string } | null = null;
 
 const panel = new Panel(
   $('panel'),
   id => {
     if (id) setSitting(false, true);
-    world?.focus(sectionKey(id), !!id);
+    const view = id && viewOverride?.id === id ? viewOverride.view : sectionKey(id);
+    viewOverride = null;
+    world?.focus(view, !!id);
     screen.showProject(id?.startsWith('project:') ? id.slice(8) : null, performance.now() / 1000);
     const key = sectionKey(id);
     [...dock.children].forEach(b => b.setAttribute('aria-pressed', String((b as HTMLElement).dataset.id === key)));
@@ -254,7 +258,10 @@ const worldReady: Promise<World | null> = import('./scene/world')
       onPick: key => {
         sound.unlock();
         if (key === 'lamp') setLamp(!(world?.lampOn ?? true));
-        else if (key === 'whiteboard') open('project:job-scraper');
+        else if (key === 'whiteboard') {
+          viewOverride = { id: 'work', view: 'whiteboard' };
+          open('work');
+        }
         else if (key === 'cat') {
           if (wakeCat()) term.print('the cat wakes up and stretches.', 'amber');
         } else if (key === 'duck') {

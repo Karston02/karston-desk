@@ -28,16 +28,19 @@ export interface Project {
   title: string;
   tagline: string;
   role: string;
+  /** Leave empty to hide it. */
   year: string;
   stack: string[];
   /** Which mock app the 3D monitor shows when this case study is open. */
-  screen: 'scraper' | 'tickets' | 'database' | 'desk';
+  screen: 'trading' | 'proxy' | 'tickets' | 'database' | 'desk';
   problem: string;
   approach: string[];
   result: string;
   links: Link[];
-  /** Optional screenshot in /public (e.g. "/projects/job-scraper.png"). Shown in the panel and on the monitor. */
+  /** Optional screenshot in /public (e.g. "/projects/dog-shelter.png"). Shown in the panel and on the monitor. */
   image?: string;
+  /** For screen: 'database'. Up to 4 entities drawn as an EER diagram on the monitor (first three in a row, the fourth below the middle). */
+  schema?: { name: string; fields: string[] }[];
 }
 
 export interface School {
@@ -70,22 +73,31 @@ export const profile = {
   ],
   openTo: 'Open to conversations about software, full-stack and forward deployed roles. Remote or Austin.',
   links: {
-    github: '', // TODO(karston): e.g. 'https://github.com/your-handle'
-    linkedin: '', // TODO(karston): e.g. 'https://www.linkedin.com/in/your-handle'
-    resumePdf: '', // TODO(karston): put resume.pdf in /public and set this to '/resume.pdf'
+    github: 'https://github.com/Karston02',
+    linkedin: 'https://www.linkedin.com/in/karston-kuciemba',
+    resumePdf: '/resume.pdf',
   },
   skills: [
-    // TODO(karston): replace with your real stack
     'TypeScript',
     'JavaScript',
     'Python',
     'SQL',
+    'C++',
     'React',
     'Node.js',
+    'Flask',
+    'FastAPI',
+    'AWS',
+    'AWS Step Functions',
+    'DynamoDB',
+    'State machines',
+    'ETL systems',
+    'Data visualization',
     'REST APIs',
+    'OpenAPI',
+    'Git',
     'Technical specs',
     'System design',
-    'Jira',
   ],
 };
 
@@ -97,62 +109,71 @@ export const jobs: Job[] = [
     org: 'FullBloom / CharacterStrong',
     start: 'May 2023',
     end: 'Present',
-    summary: 'Full-stack work on K–12 education products used by schools and educators.',
+    summary: 'Started as an intern, then Software Engineer II, now Software Engineer III, on K–12 products used by schools and districts.',
     bullets: [
-      'Build and maintain full-stack features for education products used by schools and educators.',
-      'Write technical specs and system diagrams, then break large initiatives into scoped, estimable Jira tickets for the team.',
-      'Use AI tooling daily to speed up spec writing, diagramming and project breakdown.',
-      // TODO(karston): add 1–2 shipped highlights with a number each
+      'Designed a modernized authentication system (credentials, SSO, SAML, rostering) with unified MFA and session handling; wrote the sequence, flow and entity diagrams and the Jira initiative to lead the build.',
+      'Led multi-organization user management across the platform, so administrators can add, remove, restore and manage users across entire districts.',
+      'Made the rostering pipeline more scalable and reliable with distributed processing and locking, and fixed import and sync issues.',
+      'Built an AWS Step Functions ETL pipeline for Clever, SFTP and ClassLink that syncs rosters nightly for hundreds of districts, processing millions of user and class records.',
+      'Secured 26 legacy endpoints with user-based middleware, separate business-logic and data-access layers, and standard request validation.',
+      'As an intern, built 23 pages and 88 components from Figma designs in React and TypeScript, and led the upgrade from Mantine v5 to v6.',
     ],
-    stack: ['TypeScript', 'React', 'Node.js', 'SQL'], // TODO(karston): confirm
+    stack: ['TypeScript', 'React', 'Node.js', 'SQL', 'DynamoDB', 'AWS Step Functions'],
   },
   {
     ticket: 'KK-087',
     status: 'done',
     role: 'Software Engineering Intern',
     org: 'Kyndryl',
-    start: 'Summer 2022', // TODO(karston): real dates
-    end: '',
-    summary: 'Internal tooling and automation for infrastructure teams.', // TODO(karston)
-    bullets: ['Built internal tooling and automation for infrastructure teams.'], // TODO(karston)
-    stack: ['Python'], // TODO(karston)
+    start: 'May 2024',
+    end: 'Aug 2024',
+    summary: 'IoT telemetry, internal tools and billing automation.',
+    bullets: [
+      'Built an internal full-stack app that computes risk profiles and investment opportunities for seller proposals, saving 1,350 hours and $200,000 a year.',
+      'Automated billing for a client with over 6,000 servers, saving 120+ hours per quarter.',
+      'Built an API that streams IoT telemetry in real time, plus a front end with login that opens a digital twin for live warehouse analytics and device location.',
+    ],
+    stack: [],
   },
   {
     ticket: 'KK-042',
     status: 'done',
-    role: 'Earlier roles', // TODO(karston): real titles
-    org: 'Locus Construction · University of Colorado',
-    start: '2019', // TODO(karston)
-    end: '2021',
-    summary: 'Work outside software that taught me how projects actually run.',
-    bullets: [],
+    role: 'Payroll/Processing Assistant',
+    org: 'University of Colorado',
+    start: 'Aug 2021',
+    end: 'May 2022',
+    summary: 'Payroll document processing and data entry.',
+    bullets: [
+      'Collected and organized hundreds of payroll documents (PDW, SSA-1945, I-9) a week, keeping them compliant with state and university rules.',
+      'Did daily data entry for a range of clients and found ways to improve accuracy and efficiency with software.',
+    ],
     stack: [],
   },
 ];
 
 export const education: School[] = [
   { degree: 'M.S. Computer Science', school: 'Georgia Tech', when: 'Expected Aug 2027', note: 'Part-time while working full-time.' },
-  { degree: 'B.S. Economics', school: 'The University of Texas at Austin', when: 'May 2025' },
+  { degree: 'B.S. Economics', school: 'The University of Texas at Austin', when: 'Completed' },
 ];
 
 export const projects: Project[] = [
   {
-    slug: 'job-scraper',
-    title: 'Job Scraper',
-    tagline: 'One short list instead of a dozen job boards.',
-    role: 'Solo, built with Claude',
-    year: '2026',
-    stack: ['Python', 'Scraping', 'Scheduling'], // TODO(karston): confirm
-    screen: 'scraper',
+    slug: 'algo-trading',
+    title: 'Algorithmic Trading Platform',
+    tagline: 'Signals, backtests and live trading in one place.',
+    role: 'Solo',
+    year: '',
+    stack: ['Python', 'Pandas', 'React', 'TypeScript', 'Alpaca', 'Schwab API', 'SEC EDGAR', 'Parquet'],
+    screen: 'trading',
     problem:
-      'Job boards are noisy. Checking a dozen sites by hand for roles that matched what I actually wanted (location, pay, role type, no on-call) took hours every week.',
+      'An end-to-end platform that combines historical and real-time market data, technical indicators and SEC Form 4 insider transactions to generate systematic equity and options trading signals.',
     approach: [
-      'Scrapers pull postings from several boards on a schedule and normalize them into one list.',
-      'A rules layer filters on what I care about and drops dealbreakers before I ever see them.',
-      'I paired with Claude throughout, which took it from idea to daily use quickly.',
+      'Built a reusable backtesting and risk-management framework that tests strategies across historical market regimes, tunes parameters and simulates execution before anything goes live.',
+      'Integrated a live Charles Schwab brokerage account for real trade execution.',
+      'Built a real-time React dashboard for positions, strategy parameters, trade signals, portfolio performance and interactive backtest results.',
     ],
-    result: 'I now scan one short list instead of a dozen sites. TODO(karston): add a number, e.g. postings filtered per week or hours saved.',
-    links: [], // TODO(karston): { label: 'Code', href: 'https://github.com/...' }
+    result: '',
+    links: [],
   },
   {
     slug: 'spec-to-tickets',
@@ -168,24 +189,48 @@ export const projects: Project[] = [
       'The same flow drafts a system diagram from the spec for the team to react to.',
       'Finally it proposes sized Jira tickets with acceptance criteria, which I review and adjust.',
     ],
-    result: 'TODO(karston): describe the impact, e.g. how much faster planning got or how many projects it has broken down.',
+    result: '',
     links: [],
   },
   {
-    slug: 'cs6400',
-    title: 'CS6400 Database Project',
-    tagline: 'Requirements to a working app on a normalized schema.',
-    role: 'Team of 4, Georgia Tech', // TODO(karston): confirm team size
+    slug: 'dog-shelter',
+    title: 'Dog Shelter Database',
+    tagline: 'From written requirements to a working shelter app.',
+    role: 'Team project, Georgia Tech',
     year: '2026',
     stack: ['SQL', 'EER modeling', 'Normalization'],
     screen: 'database',
-    problem: 'A multi-phase team project for Database Systems Concepts & Design: take a real-world application from written requirements to a working implementation.',
+    problem: 'Design and build a working application for a dog shelter, starting from written requirements.',
     approach: [
-      'Turned the requirements into an EER diagram and information flow diagram.',
-      'Mapped the model to a relational schema and normalized it.',
-      'Implemented the queries and the application on top of it.',
+      'Turned the requirements into an information flow diagram (IFD) and an EER diagram.',
+      'Mapped the EER model to a relational schema and normalized it.',
+      'Wrote the SQL scripts and built the fully functional product on top of the schema.',
     ],
-    result: 'TODO(karston): what the app does and what part you owned.',
+    result: '',
+    links: [],
+    // Illustrative entities for the monitor (mark keys with PK / FK)
+    schema: [
+      { name: 'Adopter', fields: ['email PK', 'name', 'phone'] },
+      { name: 'Application', fields: ['app_id PK', 'email FK', 'status'] },
+      { name: 'Dog', fields: ['dog_id PK', 'name', 'breed', 'surrender_date'] },
+      { name: 'Adoption', fields: ['dog_id FK', 'app_id FK', 'adopted_on'] },
+    ],
+  },
+  {
+    slug: 'http-proxy',
+    title: 'HTTP Proxy',
+    tagline: 'A multi-threaded proxy server for any browser.',
+    role: 'Solo',
+    year: '',
+    stack: ['Python', 'Sockets', 'Threading'],
+    screen: 'proxy',
+    problem: 'A proxy server that handles many browser requests at the same time, over both HTTP and HTTPS.',
+    approach: [
+      'Multi-threaded server that handles client requests concurrently and supports GET and CONNECT from any browser configured to use it.',
+      'Rewrites headers on the way through, switching to non-persistent connections so every request can be logged, and manages connection headers before forwarding.',
+      'Optional JSON logging of each request, the modified headers and the server response.',
+    ],
+    result: '',
     links: [],
   },
   {
@@ -211,7 +256,7 @@ export const projects: Project[] = [
 export const board: BoardTicket[] = [
   { id: 'KK-1', title: 'B.S. Economics · UT Austin', column: 'Done', tag: 'edu' },
   { id: 'KK-2', title: 'Internship · Kyndryl', column: 'Done', tag: 'work' },
-  { id: 'KK-3', title: 'Ship the job scraper', column: 'Done', tag: 'side' },
+  { id: 'KK-3', title: 'Rostering ETL · Step Functions', column: 'Done', tag: 'work' },
   { id: 'KK-4', title: 'SWE III · FullBloom / CharacterStrong', column: 'In Progress', tag: 'work' },
   { id: 'KK-5', title: 'M.S. CS · Georgia Tech', column: 'In Progress', tag: 'edu' },
   { id: 'KK-6', title: 'Graduate · Aug 2027', column: 'Backlog', tag: 'edu' },
@@ -219,6 +264,6 @@ export const board: BoardTicket[] = [
 ];
 
 export const site = {
-  url: 'https://karston.dev', // TODO(karston): your real domain, used in meta tags
+  url: 'https://karston.dev',
   description: 'Karston Kuciemba is a software engineer in Austin building products for schools. Explore a 3D desk, or read the plain résumé.',
 };

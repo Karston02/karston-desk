@@ -32,6 +32,8 @@ function injectContent(): Plugin {
 export default defineConfig({
   plugins: [injectContent()],
   build: {
+    // three.js is ~540 kB but loads lazily (src/scene/world.ts) while the boot screen types.
+    chunkSizeWarningLimit: 600,
     rollupOptions: {
       input: {
         main: fileURLToPath(new URL('./index.html', import.meta.url)),

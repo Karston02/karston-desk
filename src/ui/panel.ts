@@ -20,7 +20,6 @@ export const SECTIONS: { id: PanelId; label: string; obj: string }[] = [
   { id: 'contact', label: 'Contact', obj: 'phone' },
 ];
 
-const NOTE = '<p class="note m" style="font-family:var(--f-mono);font-size:.66rem;margin-top:auto">Some details are still filler.</p>';
 const chips = (xs: string[]) => (xs.length ? `<div class="chips">${xs.map(x => `<span>${esc(x)}</span>`).join('')}</div>` : '');
 const linksHtml = () =>
   profileLinks()
@@ -34,7 +33,7 @@ function render(id: PanelId): string {
     const result = clean(p.result);
     return `
       <button class="back" type="button" data-open="projects">← All projects</button>
-      <div class="obj">Case study · ${esc(p.year)}</div>
+      <div class="obj">Case study${p.year ? ` · ${esc(p.year)}` : ''}</div>
       <h2>${esc(p.title)}</h2>
       <p>${esc(p.tagline)}</p>
       <p class="when">${esc(p.role)}</p>
@@ -148,7 +147,7 @@ export class Panel {
       this.el.hidden = true;
       void this.el.offsetWidth;
       this.el.hidden = false;
-      this.el.innerHTML = `<button class="close" type="button" aria-label="Close panel">×</button>${render(id)}${NOTE}`;
+      this.el.innerHTML = `<button class="close" type="button" aria-label="Close panel">×</button>${render(id)}`;
       this.el.scrollTop = 0;
       this.el.querySelector('.close')?.addEventListener('click', () => this.show(null));
       const copy = this.el.querySelector<HTMLButtonElement>('#copy');

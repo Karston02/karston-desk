@@ -1,6 +1,6 @@
 import { projects, type Project } from '../content/data';
 import { drawTitleBar, scanlines, type Terminal } from '../terminal/terminal';
-import { roundRect, wrap } from './helpers';
+import { roundRect, wrap } from './canvas';
 import type { Game } from '../games/game';
 
 export const SCREEN_W = 1024;
@@ -106,7 +106,8 @@ export class MonitorScreen {
     }
     g.fillStyle = '#F4F2EE';
     g.fillRect(0, 0, W, H);
-    if (p.screen === 'scraper') drawScraper(g, W, H, t);
+    if (p.screen === 'trading') drawTrading(g, W, H, t);
+    else if (p.screen === 'proxy') drawProxy(g, W, H, t);
     else if (p.screen === 'tickets') drawTickets(g, W, H, t);
     else if (p.screen === 'database') drawDatabase(g, W, H, t);
     else drawDesk(g, W, H, t);
@@ -131,40 +132,132 @@ function header(g: CanvasRenderingContext2D, title: string, sub: string): void {
   g.fillText(sub, 36, 112);
 }
 
-function drawScraper(g: CanvasRenderingContext2D, W: number, _H: number, t: number): void {
-  header(g, 'Matches', 'Filtered by: remote or Austin · salary floor · no on-call');
-  const rows = [
-    ['Backend Engineer', 'Remote', '✓'],
-    ['Full-Stack Engineer', 'Austin, TX', '✓'],
-    ['Forward Deployed Engineer', 'Remote', '✓'],
-    ['Software Engineer II', 'Hybrid · Austin', '✓'],
-    ['Platform Engineer', 'Remote', '✓'],
-    ['Product Engineer', 'Austin, TX', '✓'],
-  ];
-  const shown = Math.min(rows.length, Math.floor(t * 3) + 1);
-  g.fillStyle = '#E4E0D8';
-  g.fillRect(36, 136, W - 72, 1);
-  g.font = `13px ${MONO}`;
-  g.fillStyle = '#8A8B97';
-  ['ROLE', 'LOCATION', 'MATCH'].forEach((h, i) => g.fillText(h, [36, 520, 860][i], 160));
-  for (let i = 0; i < shown; i++) {
-    const y = 200 + i * 54;
-    const [role, loc, ok] = rows[i];
-    g.fillStyle = i % 2 ? '#F4F2EE' : '#ECE9E2';
-    g.fillRect(28, y - 30, W - 56, 48);
-    g.fillStyle = '#16171F';
-    g.font = `600 19px ${SANS}`;
-    g.fillText(role, 36, y);
-    g.fillStyle = '#5A5B68';
-    g.font = `17px ${SANS}`;
-    g.fillText(loc, 520, y);
-    g.fillStyle = '#2E9B6B';
-    g.font = `700 18px ${MONO}`;
-    g.fillText(ok, 870, y);
+function drawTrading(g: CanvasRenderingContext2D, W: number, _H: number, t: number): void {
+  header(g, 'Strategy · backtest', 'Signals from price, indicators and Form 4 insider filings');
+  const x0 = 36;
+  const y0 = 140;
+  const cw = 620;
+  const ch = 380;
+  g.fillStyle = '#FFFFFF';
+  roundRect(g, x0, y0, cw, ch, 10);
+  g.fill();
+  g.strokeStyle = '#E4E0D8';
+  g.lineWidth = 1;
+  for (let i = 1; i < 5; i++) {
+    g.beginPath();
+    g.moveTo(x0 + 12, y0 + (ch / 5) * i);
+    g.lineTo(x0 + cw - 12, y0 + (ch / 5) * i);
+    g.stroke();
   }
+  const N = 120;
+  const price = (i: number) => y0 + ch * 0.62 - i * 1.1 - 55 * Math.sin(i / 11) - 22 * Math.sin(i / 3.3);
+  const px = (i: number) => x0 + 20 + (i / (N - 1)) * (cw - 40);
+  const shown = Math.min(N, Math.floor(t * 60) + 2);
+  g.strokeStyle = '#3B6FD1';
+  g.lineWidth = 2.5;
+  g.beginPath();
+  for (let i = 0; i < shown; i++) (i ? g.lineTo : g.moveTo).call(g, px(i), price(i));
+  g.stroke();
+  // buy at local price lows (largest y), sell at local highs (smallest y)
+  const signals: [number, 'BUY' | 'SELL'][] = [];
+  for (let i = 4; i < N - 4; i++) {
+    const win = [-4, -3, -2, -1, 1, 2, 3, 4].map(d => price(i + d));
+    if (win.every(y => price(i) > y)) signals.push([i, 'BUY']);
+    else if (win.every(y => price(i) < y)) signals.push([i, 'SELL']);
+  }
+  for (const [i, side] of signals) {
+    if (i >= shown) break;
+    const x = px(i);
+    const y = price(i);
+    const buy = side === 'BUY';
+    g.fillStyle = buy ? '#2E9B6B' : '#C2412D';
+    g.beginPath();
+    if (buy) {
+      g.moveTo(x, y + 10);
+      g.lineTo(x - 8, y + 24);
+      g.lineTo(x + 8, y + 24);
+    } else {
+      g.moveTo(x, y - 10);
+      g.lineTo(x - 8, y - 24);
+      g.lineTo(x + 8, y - 24);
+    }
+    g.fill();
+  }
+  // signal feed
+  const fx = x0 + cw + 24;
+  const fw = W - fx - 36;
   g.fillStyle = '#8A8B97';
+  g.font = `13px ${MONO}`;
+  g.fillText('SIGNALS', fx, y0 + 18);
+  const feed: [string, string, string][] = [
+    ['BUY', 'NVDA', 'Form 4 cluster buy'],
+    ['SELL', 'AAPL', 'RSI > 70'],
+    ['BUY', 'AMD', 'MACD cross'],
+    ['SELL', 'TSLA', 'stop hit'],
+    ['BUY', 'MSFT', 'insider buy'],
+  ];
+  const n = Math.min(feed.length, Math.floor(t * 1.6) + 1);
+  for (let i = 0; i < n; i++) {
+    const [side, sym, why] = feed[i];
+    const y = y0 + 36 + i * 68;
+    g.fillStyle = i % 2 ? '#F4F2EE' : '#ECE9E2';
+    roundRect(g, fx, y, fw, 56, 8);
+    g.fill();
+    g.fillStyle = side === 'BUY' ? '#2E9B6B' : '#C2412D';
+    g.font = `700 14px ${MONO}`;
+    g.fillText(side, fx + 12, y + 24);
+    g.fillStyle = '#16171F';
+    g.font = `700 17px ${SANS}`;
+    g.fillText(sym, fx + 70, y + 24);
+    g.fillStyle = '#5A5B68';
+    g.font = `14px ${SANS}`;
+    g.fillText(why, fx + 12, y + 45);
+  }
+}
+
+function drawProxy(g: CanvasRenderingContext2D, W: number, _H: number, t: number): void {
+  header(g, 'proxy.py · :8080', 'Threaded · GET + CONNECT · JSON logging on');
+  const rows: [string, string, string, string][] = [
+    ['CONNECT', 'github.com:443', '200', 'thread-3'],
+    ['GET', 'example.com/', '200', 'thread-1'],
+    ['CONNECT', 'fonts.gstatic.com:443', '200', 'thread-4'],
+    ['GET', 'neverssl.com/', '301', 'thread-2'],
+    ['GET', 'httpbin.org/headers', '200', 'thread-5'],
+    ['CONNECT', 'api.github.com:443', '200', 'thread-3'],
+  ];
+  g.fillStyle = '#8A8B97';
+  g.font = `13px ${MONO}`;
+  ['METHOD', 'HOST', 'STATUS', 'WORKER'].forEach((h, i) => g.fillText(h, [36, 170, 470, 560][i], 160));
+  const shown = Math.min(rows.length, Math.floor(t * 3) + 1);
+  for (let i = 0; i < shown; i++) {
+    const y = 196 + i * 44;
+    const [m, host, status, worker] = rows[i];
+    g.fillStyle = i % 2 ? '#F4F2EE' : '#ECE9E2';
+    g.fillRect(28, y - 26, 640, 38);
+    g.font = `700 15px ${MONO}`;
+    g.fillStyle = m === 'GET' ? '#3B6FD1' : '#8A4FBF';
+    g.fillText(m, 36, y);
+    g.fillStyle = '#16171F';
+    g.font = `16px ${SANS}`;
+    g.fillText(host, 170, y);
+    g.fillStyle = status === '200' ? '#2E9B6B' : '#C9821F';
+    g.font = `700 15px ${MONO}`;
+    g.fillText(status, 470, y);
+    g.fillStyle = '#6A6B78';
+    g.font = `14px ${MONO}`;
+    g.fillText(worker, 560, y);
+  }
+  // last logged request, as JSON
+  const jx = 696;
+  g.fillStyle = '#16171F';
+  roundRect(g, jx, 140, W - jx - 36, 400, 10);
+  g.fill();
+  const json = ['{', '  "method": "GET",', '  "host": "example.com",', '  "headers": {', '    "Connection": "close",', '    "Proxy-Connection": null', '  },', '  "http": "1.0",', '  "status": 200', '}'];
   g.font = `14px ${MONO}`;
-  g.fillText(`${shown} of ${rows.length} matches shown`, 36, 548);
+  json.forEach((l, i) => {
+    g.fillStyle = l.includes('"') ? '#7FD1C7' : '#F1ECE2';
+    g.fillText(l, jx + 18, 176 + i * 30);
+  });
 }
 
 function drawTickets(g: CanvasRenderingContext2D, W: number, _H: number, t: number): void {
@@ -224,13 +317,9 @@ function drawTickets(g: CanvasRenderingContext2D, W: number, _H: number, t: numb
 
 function drawDatabase(g: CanvasRenderingContext2D, W: number, _H: number, t: number): void {
   header(g, 'EER diagram', 'Phase 2 · relational mapping');
-  const ents: [string, number, number, string[]][] = [
-    // TODO(karston): swap in your project's real entities
-    ['Customer', 70, 160, ['customer_id PK', 'email', 'name']],
-    ['Order', 400, 160, ['order_id PK', 'customer_id FK', 'placed_at']],
-    ['Product', 730, 160, ['product_id PK', 'name', 'price']],
-    ['LineItem', 400, 380, ['order_id FK', 'product_id FK', 'qty']],
-  ];
+  const slots: [number, number][] = [[70, 160], [400, 160], [730, 160], [400, 380]];
+  const schema = projects.find(p => p.screen === 'database')?.schema ?? [];
+  const ents = schema.slice(0, slots.length).map(({ name, fields }, i) => [name, slots[i][0], slots[i][1], fields] as const);
   const reveal = Math.min(ents.length, Math.floor(t * 2.5) + 1);
   g.strokeStyle = '#8A8B97';
   g.lineWidth = 2;
