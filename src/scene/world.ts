@@ -41,8 +41,6 @@ export interface World {
   /** Moves the camera so the monitor fills the view. */
   sit(on: boolean): void;
   readonly sitting: boolean;
-  /** Parallax input in -0.5..0.5 (used by phone tilt). */
-  setPointer(x: number, y: number): void;
 }
 
 type View = { pos: THREE.Vector3; look: THREE.Vector3 };
@@ -59,6 +57,11 @@ const VIEWS: Record<string, View> = {
   contact: V([4.4, 2.5, 3.9], [2.5, 0.15, 0.8]),
 };
 const INTRO = V([9.5, 6.5, 13], [0, 1.4, -0.5]);
+/** Phones held upright: a more frontal view, so dragging sideways pans along the wall. */
+const PORTRAIT_HOME = V([0.3, 4.0, 12.0], [0.3, 1.55, -1.2]);
+/** How far (world units) a portrait drag can pan left or right of the center. */
+const PAN = 1.8;
+const PORTRAIT_FOV = 48;
 
 function detectQuality(): Quality {
   const coarse = matchMedia('(pointer: coarse)').matches;
@@ -148,12 +151,30 @@ export function createWorld(o: WorldOptions): World | null {
   if (q.bloom) composer.addPass(bloom);
   composer.addPass(new OutputPass());
 
-  if (import.meta.env.DEV) (window as unknown as { __desk: unknown }).__desk = { scene, camera, THREE };
+  if (import.meta.env.DEV)
+    (window as unknown as { __desk: unknown }).__desk = {
+      scene,
+      camera,
+      THREE,
+      /** Tune the portrait framing live: __desk.portrait([x,y,z], [x,y,z], fov) */
+      portrait(pos: [number, number, number], lookAt: [number, number, number], fov?: number) {
+        PORTRAIT_HOME.pos.set(...pos);
+        PORTRAIT_HOME.look.set(...lookAt);
+        if (fov) portraitFov = fov;
+        resize();
+      },
+    };
 
   /* Camera */
   let view = VIEWS.home;
   let panelOpen = false;
   let sitting = false;
+  let portrait = false;
+  let portraitFov = PORTRAIT_FOV;
+  /** Sideways pan from dragging in portrait (world units, -PAN..PAN). */
+  let pan = 0;
+  let current: string | null = null;
+  const viewFor = (key: string | null): View => (key && VIEWS[key]) || (portrait ? PORTRAIT_HOME : VIEWS.home);
   const sitView = V([0, 1.26, 2], [0, 1.26, -0.8]);
   /** Distance at which the monitor (2.75 × 1.66 incl. bezel) fills the frame. */
   const fitSit = () => {
@@ -168,15 +189,18 @@ export function createWorld(o: WorldOptions): World | null {
     const w = innerWidth;
     const h = innerHeight;
     const wide = w > 760;
+    portrait = w / h < 0.8;
     renderer.setSize(w, h, false);
     composer.setPixelRatio(q.pixelRatio);
     composer.setSize(w, h);
     camera.aspect = w / h;
-    camera.fov = wide ? 34 : 52;
+    camera.fov = wide ? 34 : portrait ? portraitFov : 52;
     fitSit();
+    if (!sitting) view = viewFor(current);
     if (sitting) camera.clearViewOffset();
     else if (panelOpen && wide) camera.setViewOffset(w, h, w * 0.17, 0, w, h);
-    else if (panelOpen) camera.setViewOffset(w, h, 0, h * 0.22, w, h);
+    // phones: the panel is a bottom sheet, so lift the scene into the space above it
+    else if (panelOpen) camera.setViewOffset(w, h, 0, h * 0.3, w, h);
     else camera.clearViewOffset();
     camera.updateProjectionMatrix();
   };
@@ -188,9 +212,9 @@ export function createWorld(o: WorldOptions): World | null {
   const ndc = new THREE.Vector2();
   const pointer = { x: 0, y: 0 };
   let hovered: Pick | null = null;
-  const pick = (e: PointerEvent | MouseEvent): Pick | null => {
+  const pickAt = (x: number, y: number): Pick | null => {
     const r = o.canvas.getBoundingClientRect();
-    ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ndc.set(((x - r.left) / r.width) * 2 - 1, -((y - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ndc, camera);
     const hit = ray.intersectObjects(
       picks.map(p => p.group),
@@ -205,10 +229,46 @@ export function createWorld(o: WorldOptions): World | null {
     }
     return null;
   };
+  /** Fingers are imprecise: if a tap misses, look for an object within ~36px of it. */
+  const RING = [0, 1, 2, 3, 4, 5, 6, 7].map(i => [Math.cos((i * Math.PI) / 4), Math.sin((i * Math.PI) / 4)]);
+  const pickNear = (x: number, y: number): Pick | null => {
+    const hit = pickAt(x, y);
+    if (hit) return hit;
+    for (const r of [18, 36]) {
+      for (const [cx, cy] of RING) {
+        const p = pickAt(x + cx * r, y + cy * r);
+        if (p) return p;
+      }
+    }
+    return null;
+  };
+
+  /* Portrait: drag sideways to look along the wall */
+  let drag: { x: number; pan: number; moved: boolean } | null = null;
+  let dragged = false;
+  const canPan = () => portrait && !current && !sitting && !o.reduced;
+  o.canvas.addEventListener('pointerdown', e => {
+    dragged = false;
+    if (e.pointerType !== 'mouse' && canPan()) drag = { x: e.clientX, pan, moved: false };
+  });
+  const endDrag = () => {
+    if (drag?.moved) dragged = true;
+    drag = null;
+  };
+  o.canvas.addEventListener('pointerup', endDrag);
+  o.canvas.addEventListener('pointercancel', endDrag);
+
   o.canvas.addEventListener('pointermove', e => {
+    if (drag) {
+      const dx = e.clientX - drag.x;
+      if (Math.abs(dx) > 8) drag.moved = true;
+      if (drag.moved) pan = Math.max(-PAN, Math.min(PAN, drag.pan - (dx / innerWidth) * PAN * 2.2));
+      return;
+    }
+    if (e.pointerType !== 'mouse') return;
     pointer.x = e.clientX / innerWidth - 0.5;
     pointer.y = e.clientY / innerHeight - 0.5;
-    const p = pick(e);
+    const p = pickAt(e.clientX, e.clientY);
     if (p !== hovered) {
       if (hovered) setGlow(hovered, false);
       hovered = p;
@@ -223,7 +283,11 @@ export function createWorld(o: WorldOptions): World | null {
     o.onHover(null, 0, 0);
   });
   o.canvas.addEventListener('click', e => {
-    const p = pick(e);
+    if (dragged) {
+      dragged = false;
+      return;
+    }
+    const p = (e as PointerEvent).pointerType === 'mouse' ? pickAt(e.clientX, e.clientY) : pickNear(e.clientX, e.clientY);
     if (p) o.onPick(p.key);
   });
 
@@ -236,8 +300,8 @@ export function createWorld(o: WorldOptions): World | null {
 
   /* Loop */
   const clock = new THREE.Clock();
-  let current: string | null = null;
   const tmp = new THREE.Vector3();
+  const lookTo = new THREE.Vector3();
   const frame: Frame = { t: 0, dt: 0.016, lamp: 0, reduced: o.reduced, sky };
   const loop = () => {
     const dt = Math.min(clock.getDelta(), 0.05);
@@ -266,12 +330,16 @@ export function createWorld(o: WorldOptions): World | null {
 
     // camera: ease toward the current view, with a little drift and pointer parallax
     const par = o.reduced || sitting ? 0 : 1;
+    const panX = canPan() ? pan : 0;
     tmp.copy(view.pos);
-    tmp.x += (pointer.x * 0.9 + Math.sin(t * 0.25) * 0.15) * par;
+    tmp.x += panX + (pointer.x * 0.9 + Math.sin(t * 0.25) * 0.15) * par;
     tmp.y += (-pointer.y * 0.5 + Math.sin(t * 0.33) * 0.06) * par;
-    const ease = o.reduced ? 1 : 1 - Math.pow(sinceLit < 3 ? 0.2 : 0.03, dt);
+    lookTo.copy(view.look);
+    lookTo.x += panX;
+    // follow a dragging finger closely; otherwise glide
+    const ease = o.reduced ? 1 : 1 - Math.pow(drag ? 0.0005 : sinceLit < 3 ? 0.2 : 0.03, dt);
     camera.position.lerp(tmp, ease);
-    look.lerp(view.look, Math.min(1, ease * 1.2));
+    look.lerp(lookTo, Math.min(1, ease * 1.2));
     camera.lookAt(look);
 
     // hover: desk objects lift, wall objects pop forward
@@ -300,7 +368,7 @@ export function createWorld(o: WorldOptions): World | null {
       if (sitting && !key) return; // closing a panel shouldn't make you stand up
       current = key;
       sitting = false;
-      view = (key && VIEWS[key]) || VIEWS.home;
+      view = viewFor(key);
       panelOpen = open;
       resize();
     },
@@ -308,15 +376,11 @@ export function createWorld(o: WorldOptions): World | null {
       sitting = on;
       current = on ? 'projects' : null;
       panelOpen = false;
-      view = on ? sitView : VIEWS.home;
+      view = on ? sitView : viewFor(null);
       resize();
     },
     get sitting() {
       return sitting;
-    },
-    setPointer(x, y) {
-      pointer.x = x;
-      pointer.y = y;
     },
     setLamp(on) {
       lampOn = on;

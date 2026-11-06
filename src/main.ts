@@ -18,7 +18,7 @@ const touch = matchMedia('(pointer: coarse)').matches;
 $('pitch').textContent = profile.pitch;
 if (touch) {
   const hint = document.querySelector('.brand .hint span');
-  if (hint) hint.textContent = 'Tap anything on the desk';
+  if (hint) hint.textContent = matchMedia('(max-aspect-ratio: 4/5)').matches ? 'Drag to look around, tap anything' : 'Tap anything on the desk';
 }
 
 const sound = new Sound();
@@ -212,7 +212,7 @@ addEventListener('keydown', e => {
   }
 });
 
-/* ---------- Touch: swipe controls for games, tilt to look around ---------- */
+/* ---------- Touch: swipe controls for games ---------- */
 const canvas = $<HTMLCanvasElement>('scene');
 let touchStart: { x: number; y: number } | null = null;
 canvas.addEventListener('touchstart', e => (touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY }), { passive: true });
@@ -229,21 +229,6 @@ canvas.addEventListener('touchend', e => {
   if (key) g.handleKey(key);
 });
 
-let tiltAsked = false;
-function enableTilt(): void {
-  if (tiltAsked || reduced || !touch) return;
-  tiltAsked = true;
-  const listen = () =>
-    addEventListener('deviceorientation', e => {
-      if (e.gamma === null || e.beta === null) return;
-      // gamma: left/right tilt; beta: front/back (phones are usually held about 45° up)
-      world?.setPointer(Math.max(-0.5, Math.min(0.5, e.gamma / 40)), Math.max(-0.5, Math.min(0.5, (e.beta - 45) / 50)));
-    });
-  const DO = (window as unknown as { DeviceOrientationEvent?: { requestPermission?: () => Promise<string> } }).DeviceOrientationEvent;
-  if (DO?.requestPermission) DO.requestPermission().then(r => r === 'granted' && listen(), () => {});
-  else listen();
-}
-addEventListener('touchend', enableTilt, { once: true });
 
 /* ---------- 3D world, downloaded while the boot screen types ---------- */
 const label = $('label');
@@ -308,7 +293,7 @@ const worldReady: Promise<World | null> = import('./scene/world')
     return w;
   });
 
-runBoot($('boot'), $('bootText'), reduced, worldReady).then(() => {
+runBoot($('boot'), $('bootText'), reduced, worldReady, touch || innerWidth < 760).then(() => {
   booted = true;
   world?.lightsOn();
 });

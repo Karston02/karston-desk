@@ -58,7 +58,7 @@ Need a reminder in the content? End a string with `TODO(karston): ...` and the n
 
 **Secrets:** 10 hidden achievements, tracked in the ★ counter (saved per browser). Defined in `src/secrets.ts`.
 
-**Phones:** swipe to play the games, tilt the phone to look around (iOS asks for permission on first tap).
+**Phones:** drag sideways to look around the room (held upright), tap anything (taps snap to the nearest object), swipe to play the games. The boot sequence is a short version.
 
 ## How it's organized
 
@@ -90,5 +90,5 @@ The 3D engine loads as a separate chunk while the boot screen types, so the page
 ## Notes
 
 - Respects `prefers-reduced-motion`: no boot sequence, no camera drift, instant panels.
-- Phones get a lighter render (lower pixel ratio, smaller shadows, fewer particles).
+- Phones get a lighter render (lower pixel ratio, smaller shadows, fewer particles), a portrait camera and a compact layout.
 - If WebGL isn't available, the page points to `/resume/`.
