@@ -31,7 +31,7 @@ Every push to `main` redeploys.
 
 Everything the site says lives in **`src/content/data.ts`**: profile, jobs, projects (with case studies), education, the wall board tickets and skills. The panels, the terminal and the `/resume/` page are all generated from it.
 
-Search the project for `TODO(karston)` to find filler that still needs real details.
+Need a reminder in the content? End a string with `TODO(karston): ...` and the note is stripped before it reaches the page.
 
 - **Screenshots:** drop an image in `public/projects/` and set `image: '/projects/name.png'` on the project. It shows in the case study and on the 3D monitor.
 - **Résumé PDF:** put `resume.pdf` in `public/` and set `profile.links.resumePdf = '/resume.pdf'`.
