@@ -498,7 +498,8 @@ export function buildRoom(scene: THREE.Scene, register: Register): Part {
   /* Per-frame */
   let lastCity = -1;
   let lastSec = -1;
-  let flicker = 0;
+  /** Neon flicker: a rare, gentle double blink of the tube. Never a strobe (at most 2 dips in half a second). */
+  let flickerAt = 30 + Math.random() * 30;
   return {
     update(f: Frame) {
       const cs = Math.floor(f.t * 2);
@@ -522,17 +523,18 @@ export function buildRoom(scene: THREE.Scene, register: Register): Part {
         }
         rainGeo.attributes.position.needsUpdate = true;
       }
-      // neon: brighter when the lamp is off, flickers now and then
-      if (!f.reduced && flicker <= 0 && Math.random() < 0.002) flicker = 0.35;
+      // neon: brighter when the lamp is off, blinks twice every 30-60 seconds
       let on = 1;
-      if (flicker > 0) {
-        flicker -= f.dt;
-        on = Math.sin(flicker * 90) > -0.2 ? 1 : 0.3;
+      const since = f.t - flickerAt;
+      if (!f.reduced && since >= 0) {
+        if (since < 0.08 || (since > 0.22 && since < 0.3)) on = 0.6;
+        if (since > 0.5) flickerAt = f.t + 30 + Math.random() * 30;
       }
       const night = 1 - f.lamp;
       neonMat.opacity = on;
       neonGlow.material.opacity = (0.22 + night * 0.15 + 0.03 * Math.sin(f.t * 3)) * on;
-      neonLight.intensity = LIGHTS.neon * (1 + night * 0.8) * on;
+      // the light it casts on the room barely dips, so the whole room never pulses
+      neonLight.intensity = LIGHTS.neon * (1 + night * 0.8) * (0.9 + 0.1 * on);
       const sec = Math.floor(Date.now() / 1000);
       if (sec !== lastSec) {
         lastSec = sec;

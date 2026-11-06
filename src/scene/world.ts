@@ -174,11 +174,11 @@ export function createWorld(o: WorldOptions): World | null {
         PORTRAIT_HOME.pos.set(...pos);
         PORTRAIT_HOME.look.set(...lookAt);
         if (fov) portraitFov = fov;
-        resize();
+        frameCamera();
       },
       closeUp(n: number) {
         closeUpFit = n;
-        resize();
+        frameCamera();
       },
     };
 
@@ -213,14 +213,12 @@ export function createWorld(o: WorldOptions): World | null {
   const look = (o.reduced ? VIEWS.home : INTRO).look.clone();
   camera.position.copy((o.reduced ? VIEWS.home : INTRO).pos);
 
-  const resize = () => {
+  /** Camera framing only. Cheap and never touches the canvas, so panel and sit changes can't flash. */
+  const frameCamera = () => {
     const w = innerWidth;
     const h = innerHeight;
     const wide = w > 760;
     portrait = w / h < 0.8;
-    renderer.setSize(w, h, false);
-    composer.setPixelRatio(pixelRatio);
-    composer.setSize(w, h);
     camera.aspect = w / h;
     camera.fov = wide ? 34 : portrait ? portraitFov : 52;
     fitSit();
@@ -231,6 +229,28 @@ export function createWorld(o: WorldOptions): World | null {
     else if (panelOpen) camera.setViewOffset(w, h, 0, h * 0.3, w, h);
     else camera.clearViewOffset();
     camera.updateProjectionMatrix();
+  };
+  /**
+   * Resizing the canvas wipes it and rebuilds the bloom buffers, so only do it when the size really
+   * changed, then draw straight away so a blank frame never reaches the screen.
+   */
+  let sizedAs = '';
+  let running = false;
+  const resize = () => {
+    const w = innerWidth;
+    const h = innerHeight;
+    const key = `${w}x${h}@${pixelRatio}`;
+    if (key !== sizedAs) {
+      sizedAs = key;
+      renderer.setPixelRatio(pixelRatio);
+      renderer.setSize(w, h, false);
+      composer.setPixelRatio(pixelRatio);
+      composer.setSize(w, h);
+      frameCamera();
+      if (running) composer.render(0);
+      return;
+    }
+    frameCamera();
   };
   addEventListener('resize', resize);
   resize();
@@ -324,7 +344,8 @@ export function createWorld(o: WorldOptions): World | null {
   let lampOn = lampWanted(sky);
   let lampLevel = 0;
   let litAt = o.reduced ? -10 : Infinity;
-  const flicker = (d: number) => (d < 0 ? 0 : d < 0.08 ? 0.7 : d < 0.16 ? 0 : d < 0.24 ? 0.9 : d < 0.4 ? 0.1 : d < 0.5 ? 0.6 : 1);
+  // lights on: one soft catch before the bulb settles (a single dip, never a strobe)
+  const flicker = (d: number) => (d < 0 ? 0 : d < 0.12 ? 0.6 : d < 0.24 ? 0.3 : 1);
 
   /* Loop */
   const clock = new THREE.Clock();
@@ -343,7 +364,6 @@ export function createWorld(o: WorldOptions): World | null {
       if (raw > 1 / 40) slowFrames++;
       if (sampled === 120 && slowFrames > 60) {
         pixelRatio = 1.5;
-        renderer.setPixelRatio(pixelRatio);
         resize();
       }
     }
@@ -400,6 +420,7 @@ export function createWorld(o: WorldOptions): World | null {
     desk.setScreenLevel(o.screen.isLight ? SCREEN_LIGHT : SCREEN_GLOW);
 
     composer.render(dt);
+    running = true;
     requestAnimationFrame(loop);
   };
   requestAnimationFrame(loop);
@@ -411,14 +432,14 @@ export function createWorld(o: WorldOptions): World | null {
       sitting = false;
       view = viewFor(key);
       panelOpen = open;
-      resize();
+      frameCamera();
     },
     sit(on) {
       sitting = on;
       current = on ? 'projects' : null;
       panelOpen = false;
       view = on ? sitView : viewFor(null);
-      resize();
+      frameCamera();
     },
     get sitting() {
       return sitting;
