@@ -67,7 +67,9 @@ function detectQuality(): Quality {
   const coarse = matchMedia('(pointer: coarse)').matches;
   const small = Math.min(innerWidth, innerHeight) < 600;
   const low = coarse || small;
-  return { low, shadowSize: low ? 1024 : 2048, bloom: true, pixelRatio: Math.min(devicePixelRatio, low ? 1.5 : 2) };
+  // Phones get the same 2x cap as desktop: at 1.5x a 3x phone renders at half resolution and the text on the
+  // monitor, whiteboard and phone goes blurry. If a phone can't keep up, the loop drops it to 1.5x.
+  return { low, shadowSize: low ? 1024 : 2048, bloom: true, pixelRatio: Math.min(devicePixelRatio, 2) };
 }
 
 /** Builds the room. Returns null if WebGL is unavailable. */
@@ -101,6 +103,16 @@ export function createWorld(o: WorldOptions): World | null {
   const room = buildRoom(scene, register);
   const desk = buildDesk(scene, register, o.screen.canvas, q);
   const cat = buildCat(scene, register, { onKey: k => o.onCatKey(k), onCrossed: () => o.onCatCrossed() });
+
+  // Sharp text on surfaces seen at an angle (whiteboard, ticket board, monitor, phone)
+  const aniso = renderer.capabilities.getMaxAnisotropy();
+  scene.traverse((obj: THREE.Object3D) => {
+    const m = (obj as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined;
+    if (m?.map && m.map.anisotropy !== aniso) {
+      m.map.anisotropy = aniso;
+      m.map.needsUpdate = true;
+    }
+  });
 
   // Give each clickable mesh its own material so hover glow doesn't leak to shared materials.
   for (const p of picks) {
@@ -145,6 +157,7 @@ export function createWorld(o: WorldOptions): World | null {
   let userTouchedLamp = false;
 
   /* Post-processing: bloom makes the neon, screen and bulb glow for real */
+  let pixelRatio = q.pixelRatio;
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
   const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), BLOOM.strength, BLOOM.radius, BLOOM.threshold);
@@ -163,6 +176,10 @@ export function createWorld(o: WorldOptions): World | null {
         if (fov) portraitFov = fov;
         resize();
       },
+      closeUp(n: number) {
+        closeUpFit = n;
+        resize();
+      },
     };
 
   /* Camera */
@@ -174,7 +191,18 @@ export function createWorld(o: WorldOptions): World | null {
   /** Sideways pan from dragging in portrait (world units, -PAN..PAN). */
   let pan = 0;
   let current: string | null = null;
-  const viewFor = (key: string | null): View => (key && VIEWS[key]) || (portrait ? PORTRAIT_HOME : VIEWS.home);
+  /** How much to pull close-ups back on a narrow screen (dev: __desk.closeUp = n). */
+  let closeUpFit = 0.8;
+  const viewFor = (key: string | null): View => {
+    const v = key ? VIEWS[key] : undefined;
+    if (!v) return portrait ? PORTRAIT_HOME : VIEWS.home;
+    if (!portrait) return v;
+    // Close-ups were framed for a wide screen (about 0.49 of the distance visible on each side).
+    // In portrait far less fits across, so back the camera away from its target until the object fits.
+    const halfW = Math.tan((camera.fov * Math.PI) / 360) * camera.aspect;
+    const k = Math.max(1, (0.49 / halfW) * closeUpFit);
+    return { pos: v.pos.clone().sub(v.look).multiplyScalar(k).add(v.look), look: v.look };
+  };
   const sitView = V([0, 1.26, 2], [0, 1.26, -0.8]);
   /** Distance at which the monitor (2.75 × 1.66 incl. bezel) fills the frame. */
   const fitSit = () => {
@@ -191,7 +219,7 @@ export function createWorld(o: WorldOptions): World | null {
     const wide = w > 760;
     portrait = w / h < 0.8;
     renderer.setSize(w, h, false);
-    composer.setPixelRatio(q.pixelRatio);
+    composer.setPixelRatio(pixelRatio);
     composer.setSize(w, h);
     camera.aspect = w / h;
     camera.fov = wide ? 34 : portrait ? portraitFov : 52;
@@ -303,9 +331,22 @@ export function createWorld(o: WorldOptions): World | null {
   const tmp = new THREE.Vector3();
   const lookTo = new THREE.Vector3();
   const frame: Frame = { t: 0, dt: 0.016, lamp: 0, reduced: o.reduced, sky };
+  // Watch the frame rate for a few seconds; if a phone is struggling at 2x, drop to 1.5x once.
+  let slowFrames = 0;
+  let sampled = 0;
   const loop = () => {
-    const dt = Math.min(clock.getDelta(), 0.05);
+    const raw = clock.getDelta();
+    const dt = Math.min(raw, 0.05);
     const t = clock.elapsedTime;
+    if (pixelRatio > 1.5 && t > 2 && sampled < 120) {
+      sampled++;
+      if (raw > 1 / 40) slowFrames++;
+      if (sampled === 120 && slowFrames > 60) {
+        pixelRatio = 1.5;
+        renderer.setPixelRatio(pixelRatio);
+        resize();
+      }
+    }
     if (t - lastSkyCheck > 10) {
       lastSkyCheck = t;
       sky = skyAt(pinned ? dateForPhase(pinned) : new Date());
